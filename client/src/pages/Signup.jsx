@@ -1,51 +1,41 @@
 import React, { useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { Calendar, Mail, User } from 'lucide-react'
+import { useAuthStore } from '../store/useAuthStore'
+import { useNavigate } from 'react-router-dom'
 
 const Signup = () => {
-  const [formData, setFormData] = useState({
-    name: 'Jonas Khanwald',
-    dateOfBirth: '11 December 1997',
-    email: 'jonas_kahnwald@gmail.com'
-  })
   const [otp, setOtp] = useState('')
   const [showOtpField, setShowOtpField] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [name, setName] = useState('');
+  const [dob, setDob] = useState('');
+  const [email, setEmail] = useState('');
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
+  const {signup,isSigningUp,user,isVerifyingOTP,verifyOTP,isOtpSend} = useAuthStore();
+  const navigate = useNavigate();
+
+  if(user){
+    navigate('/');
   }
+
 
   const handleGetOtp = async () => {
     // Validate required fields
-    if (!formData.name || !formData.dateOfBirth || !formData.email) {
+    if (!name || !dob || !email) {
       toast.error('Please fill in all fields')
       return
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(formData.email)) {
+    if (!emailRegex.test(email)) {
       toast.error('Please enter a valid email address')
       return
     }
-
-    setIsLoading(true)
     
-    try {
-      // Simulate API call to send OTP
-      await new Promise(resolve => setTimeout(resolve, 1500))
+    await signup({ name, dob, email });
+    setShowOtpField(true)
       
-      setShowOtpField(true)
-      toast.success('OTP sent successfully!')
-    } catch (error) {
-      toast.error('Failed to send OTP. Please try again.')
-    } finally {
-      setIsLoading(false)
-    }
   }
 
   const handleSignUp = async () => {
@@ -54,24 +44,13 @@ const Signup = () => {
       return
     }
 
-    if (otp.length < 4) {
-      toast.error('OTP must be at least 4 characters')
+    if (otp.length < 6) {
+      toast.error('OTP must be at least 6 characters') // Assuming 6-digit OTP
       return
     }
-
-    setIsLoading(true)
     
-    try {
-      // Simulate API call for signup
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      toast.success('Account created successfully!')
-      // Redirect logic here
-    } catch (error) {
-      toast.error('Signup failed. Please try again.')
-    } finally {
-      setIsLoading(false)
-    }
+    await verifyOTP({ email, otp });
+   
   }
 
   return (
@@ -113,8 +92,8 @@ const Signup = () => {
                   name="name"
                   type="text"
                   autoComplete="name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   placeholder="Enter your full name"
                 />
@@ -131,8 +110,8 @@ const Signup = () => {
                   id="dateOfBirth"
                   name="dateOfBirth"
                   type="text"
-                  value={formData.dateOfBirth}
-                  onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                  value={dob}
+                  onChange={(e) => setDob(e.target.value)}
                   className="appearance-none relative block w-full px-3 py-3 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   placeholder="Enter date of birth"
                 />
@@ -156,8 +135,8 @@ const Signup = () => {
                   name="email"
                   type="email"
                   autoComplete="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   placeholder="Enter your email address"
                 />
@@ -189,19 +168,19 @@ const Signup = () => {
                 <button
                   type="button"
                   onClick={handleGetOtp}
-                  disabled={isLoading}
+                  disabled={isSigningUp}
                   className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isLoading ? 'Sending OTP...' : 'Get OTP'}
+                  {isSigningUp ? 'Sending OTP...' : 'Get OTP'}
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={handleSignUp}
-                  disabled={isLoading}
+                  disabled={isVerifyingOTP}
                   className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isLoading ? 'Creating Account...' : 'Sign up'}
+                  {isVerifyingOTP ? 'Creating Account...' : 'Sign up'}
                 </button>
               )}
             </div>
@@ -212,6 +191,7 @@ const Signup = () => {
               <button
                 type="button"
                 className="underline text-sm text-blue-600 hover:text-blue-500 font-medium"
+                onClick={() => navigate('/login')}
               >
                 Sign in
               </button>

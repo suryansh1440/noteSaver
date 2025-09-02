@@ -11,7 +11,7 @@ export const signup = async (req, res) => {
     if (!name || !email || !dob) {
       return res.status(400).json({ 
         success: false,
-        message: "Name, email and date of birth are required" 
+        message: "Name, email and dob are required" 
       });
     }
 
@@ -84,7 +84,7 @@ export const verifyOTP = async (req, res) => {
     }
 
     // Check if OTP matches
-    if (user.otp !== otp) {
+    if (user.otp.toString() !== otp) {
       return res.status(400).json({
         success: false,
         message: "Invalid OTP"
@@ -110,12 +110,8 @@ export const verifyOTP = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "OTP verified successfully",
-      data: {
-        userId: user._id,
-        name: user.name,
-        email: user.email,
-        token: token
-      }
+      user,
+      token
     });
 
   } catch (error) {
@@ -153,7 +149,7 @@ export const resendOTP = async (req, res) => {
     const newOtpExpiry = new Date(Date.now() + 15 * 60 * 1000);
 
     // Update user with new OTP
-    user.otp = newOtp;
+    user.otp = newOtp.toString();
     user.otpExpiry = newOtpExpiry;
     await user.save();
 
@@ -234,12 +230,8 @@ export const login = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Login successful",
-      data: {
-        userId: user._id,
-        name: user.name,
-        email: user.email,
-        token: token
-      }
+      user,
+      token
     });
 
   } catch (error) {

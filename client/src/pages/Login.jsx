@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { Mail, Eye, EyeOff } from 'lucide-react'
+import { useAuthStore } from '../store/useAuthStore'
+import { useNavigate } from 'react-router-dom'
 
 const Login = () => {
   const [email, setEmail] = useState('')
@@ -8,8 +10,15 @@ const Login = () => {
   const [keepLoggedIn, setKeepLoggedIn] = useState(false)
   const [showOtp, setShowOtp] = useState(false)
 
+  const {user,login,isLogging,isResendingOTP,resendOTP,isOtpSend} = useAuthStore();
+  const navigate = useNavigate();
+
+  if(user){
+    navigate('/');
+  }
+
   const handleResendOtp = () => {
-    toast.success('OTP sent successfully!')
+    resendOTP({email});
   }
 
   const handleSignIn = () => {
@@ -17,8 +26,8 @@ const Login = () => {
       toast.error('Please fill in all fields')
       return
     }
-    // Handle sign in logic here
-    toast.success('Signed in successfully!')
+    login({email,otp});
+    // navigate('/dashboard');
   }
 
   return (
@@ -66,7 +75,8 @@ const Login = () => {
               </label>
             </div>
 
-            {/* OTP field */}
+        
+            {isOtpSend && (<>
             <div className="relative">
               <input
                 id="otp"
@@ -96,14 +106,13 @@ const Login = () => {
               </button>
             </div>
 
-            {/* Resend OTP */}
             <div className="flex justify-start">
               <button
                 type="button"
                 onClick={handleResendOtp}
                 className="underline text-sm text-blue-600 hover:text-blue-500 font-medium"
               >
-                Resend OTP
+                {isResendingOTP ? 'Resending OTP...' : 'Resend OTP'}
               </button>
             </div>
 
@@ -120,18 +129,27 @@ const Login = () => {
               <label htmlFor="keep-logged-in" className="ml-2 block text-sm text-gray-900">
                 Keep me logged in
               </label>
-            </div>
+            </div></>)}
 
             {/* Sign in button */}
-            <div>
+            {isOtpSend ? (<div>
               <button
                 type="button"
                 onClick={handleSignIn}
                 className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
               >
-                Sign in
+                {isLogging ? 'Signing in...' : 'Sign in'}
               </button>
-            </div>
+            </div>) : 
+            (<div>
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+              >
+                {isResendingOTP ? 'Sending OTP...' : 'Send OTP'}
+              </button>
+            </div>)}
 
             {/* Create account link */}
             <div className="text-center">
@@ -139,6 +157,7 @@ const Login = () => {
               <button
                 type="button"
                 className="underline text-sm text-blue-600 hover:text-blue-500 font-medium"
+                onClick={() => navigate('/signup')}
               >
                 Create one
               </button>
